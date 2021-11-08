@@ -1,0 +1,14 @@
+name: venv-dtw
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.9.7
+  - matplotlib
+  - numpy
+  - pandas
+  - seaborn
+  - pip:
+      - dtaidistance
+      - dtw-python
+  

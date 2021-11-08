@@ -1,0 +1,7 @@
+python>=3.9.7
+matplotlib
+numpy
+pandas
+seaborn
+dtaidistance
+dtw-python
