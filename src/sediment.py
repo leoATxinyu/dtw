@@ -7,7 +7,7 @@ from scipy.spatial.distance import euclidean
 from dtaidistance import dtw, dtw_visualisation
 
 
-sns.set(rc={'figure.figsize':(11.7,5)})
+
 
 
 class sedimentTimeWarp:
@@ -16,14 +16,20 @@ class sedimentTimeWarp:
         self.target: pd.Series = target
         self.data: pd.Series = data
 
+
     @staticmethod
     def smooth_time_series(time_series: pd.Series, window_size: int = 11, polynomial: int = 3):
         return savitzky_golay(time_series, window_size, polynomial)
 
+
+    def plot_super(self):
+        sns.set(rc={'figure.figsize':(11.7,5)})
+
+
     def simple_distance(self, use_smoothed=False, window_size: int = None, polynomial: int = None):
         if use_smoothed:
             if not window_size or not polynomial:
-                print('ERROR: Missing window_size or polynomial parameter.')
+                print("ERROR: Missing 'window_size' or 'polynomial' parameter.")
                 return
             self.target = self.smooth_time_series(self.target, window_size, polynomial)
         self.distance: float = dtw.distance(self.data, self.target)
@@ -48,5 +54,5 @@ if __name__ == "__main__":
     target = zscore(target)   
 
     record = sedimentTimeWarp(data, target)
-    record.simple_distance(use_smoothed=True, window_size=11, polynomial=3)
+    record.simple_distance(use_smoothed=False)
     # print(record.distance)
