@@ -23,7 +23,8 @@ class SedimentTimeWarp:
 
     @staticmethod
     def smooth_time_series(time_series: Union[pd.Series, list], window_size: int = 11, polynomial: int = 3):
-        
+        """Smooth a time-series using Savitzky-Golay smoothing algorithm
+        """        
         if isinstance(time_series, (pd.Series, np.array, list)):
             return savitzky_golay(time_series, window_size, polynomial)
         else:
@@ -31,6 +32,8 @@ class SedimentTimeWarp:
 
 
     def simple_distance(self, use_smoothed: bool = False, window_size: int = None, polynomial: int = None):
+        """Calculate distance for a given target/data pair
+        """
         if use_smoothed:
             if not window_size or not polynomial:
                 print("ERROR: Missing 'window_size' or 'polynomial' parameter.")
@@ -40,8 +43,22 @@ class SedimentTimeWarp:
         print(f'Distance: {self.distance}')
 
 
-    def minimize_distance(self, start_time: int = 100, end_time: int = 1000, step_size: int = 5):
-        """Find the simple minimum distance(s) for a given target & data pair
+    def minimize_distance(self, start_time: int, end_time: int, step_size: int):
+        """Find the simple minimum distance(s) for a given target/data pair
+
+        Parameters
+        ----------
+        start_time: int
+        end_time: int
+        step_size: int 
+
+        Returns
+        -------
+        
+
+        Example usage
+        -------------
+        
         """
         min_distances: dict = {}
         for i in range(start_time, end_time, step_size):
@@ -59,8 +76,8 @@ class SedimentTimeWarp:
 
     def monte_carlo(self):
         """Perform complex Monte Carlo simulation of various 
-        parameters to find minimum distance(s) for a given pair 
-        of target & data.        
+        parameters to find minimum distance(s) for a given 
+        target/data pair.        
         """
         pass
 
@@ -71,7 +88,7 @@ if __name__ == "__main__":
     df_1100 = pd.read_csv('data/core_1100.csv')
     stack = pd.read_csv('data/LR04stack.txt', sep='\\t', engine='python')       
     test_dtw = SedimentTimeWarp(stack, df_1100)
-    distances = test_dtw.minimize_distance(step_size=100)
+    distances = test_dtw.minimize_distance(start_time=100, end_time=1000, step_size=100)
     print(distances.values())
 
 
