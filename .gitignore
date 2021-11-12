@@ -3,3 +3,6 @@
 __pycache__
 data
 figures
+__pycache__
+.vscode
+*.ipynb
