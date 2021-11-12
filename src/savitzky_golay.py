@@ -3,8 +3,9 @@ from math import factorial
 
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
-    """
-    Source: https://scipy.github.io/old-wiki/pages/Cookbook/SavitzkyGolay
+    """Savitzky–Golay filter
+    Original paper: https://pubs.acs.org/doi/abs/10.1021/ac60214a047
+    Code Source: https://scipy.github.io/old-wiki/pages/Cookbook/SavitzkyGolay
     
         Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
         The Savitzky-Golay filter removes high frequency noise from data.
