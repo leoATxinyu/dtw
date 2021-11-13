@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from math import factorial
 
 
@@ -54,7 +55,10 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
         .. [2] Numerical Recipes 3rd Edition: The Art of Scientific Computing
         W.H. Press, S.A. Teukolsky, W.T. Vetterling, B.P. Flannery
         Cambridge University Press ISBN-13: 9780521880688
-    """    
+    """ 
+    if type(y) == pd.Series:
+        y = np.array(y)
+
     try:
         window_size = np.abs(int(window_size))
         order = np.abs(int(order))
