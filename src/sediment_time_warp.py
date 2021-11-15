@@ -1,3 +1,4 @@
+from os import stat
 import numpy as np
 import pandas as pd
 from typing import Union 
@@ -10,9 +11,9 @@ from dtaidistance import dtw, dtw_visualisation
 
 class SedimentTimeWarp:
 
-    def __init__(self, target: pd.DataFrame, data: Union[pd.Series, np.array, list]):
+    def __init__(self, target: pd.DataFrame, data: pd.DataFrame):
         self.target: pd.DataFrame = target        
-        self.data: Union[pd.Series, np.array, list] = data
+        self.data: pd.DataFrame = data
 
 
     @staticmethod
@@ -30,14 +31,15 @@ class SedimentTimeWarp:
             if not window_size or not polynomial:
                 print("ERROR: Missing 'window_size' or 'polynomial' parameter.")
                 return
-            data = self.smooth_time_series(self.data, window_size, polynomial)
+            data = self.smooth_time_series(self.data.iloc[:,1], window_size, polynomial)
         distance: float = dtw.distance(data, self.target.iloc[:,1])
         print(f'Distance: {distance}')
         return distance
 
 
     def minimize_distance(self, start_time: Union[int, float], 
-                          end_time: Union[int, float], time_step_size: Union[int, float]):
+                          end_time: Union[int, float], time_step_size: Union[int, float],
+                          warp_path: bool = False):
         """Find the minimum Euclidian distance(s) for a given target/data pair by stepping
         through the range of the target series given by [start_time: <time_step_size> :end_time].
 
@@ -55,6 +57,9 @@ class SedimentTimeWarp:
             The step size used to filter the target time-series, iterating through the target from start_time to
             end_time in steps=time_step_size.
 
+        warp_path: bool
+            If true, also calculates the warping path for the age corresponding to the minimum distance found.
+
         Returns
         -------
         distance: float
@@ -71,7 +76,7 @@ class SedimentTimeWarp:
         -------------
         
         """
-        data = zscore(self.data)
+        data = zscore(self.data.iloc[:,1])
         target = self.target        
         target.iloc[:,1] = zscore(target.iloc[:,1])
         min_distances: dict = {}
@@ -84,15 +89,27 @@ class SedimentTimeWarp:
         distance: float = min(min_distances.values())
         target_time: list[float] = [k for k, v in min_distances.items() if v==distance]
         print(f'Minimum distance found: ~{round(distance, 2)} at time_step_size={target_time}')
+
+        if warp_path:
+            self.warping_path = self.get_warping_path(data, target, target_time[0])
+  
         return distance, target_time, min_distances
 
 
-    def get_warping_path(self, target_time: int = None):
-        if not target_time and self.target_time:
-            target_time = self.target_time
-        elif not target_time and not self.target_time:
-            raise TypeError("No target time defined. Please run method 'minimize distance' first or add as argument to method call")
+    @staticmethod
+    def get_warping_path(data, target, target_time: Union[int, float]):
+        _target = target[target.iloc[:,0] <= target_time]
+        optimal_path = dtw.warping_path(data, _target.iloc[:,1])
+        return optimal_path
 
+
+    @staticmethod
+    def map_warping_path(warping_path, index: int):
+        """Map the warping path to the original indices"""
+        for item in warping_path:
+            if item[0] == index:
+                return item[1]
+            
 
     def monte_carlo(self):
         """Perform complex Monte Carlo simulation of various 
@@ -112,30 +129,9 @@ class SedimentTimeWarp:
 if __name__ == "__main__":
 
     data = pd.read_csv('data/core_1100.csv')
-    data = data.iloc[:,1]
     target = pd.read_csv('data/LR04stack.txt', sep='\\t', engine='python') 
 
     test_dtw = SedimentTimeWarp(target=target, data=data)
-    simple_distance = test_dtw.simple_distance(use_smoothed=True, window_size=11, polynomial=3)    
-    distance, target_time, _ = test_dtw.minimize_distance(start_time=100, end_time=1000, time_step_size=10)
-
-    # path = test_dtw.get_warping_path()
-    # print(distances.values())
-
-
-
-
-
-    # df_1100 = pd.read_csv('data/core_1100.csv')
-    # data = df_1100['d18O_pl']
-    # data = np.array(data)
-    # data = savitzky_golay(data, 11, 3)
-    # stack = pd.read_csv('data/LR04stack.txt', sep='\\t', engine='python')
-    # stack = stack[['Time_ka', 'Benthic_d18O_per-mil']]
-    # _tmp = stack[stack['Time_ka'] <= 372]
-    # target = _tmp['Benthic_d18O_per-mil']
-    # target = zscore(target)   
-
-    # record = sediTimeWarp(data, target)
-    # record.simple_distance(use_smoothed=False)
-    # print(record.distance)
+    # simple_distance = test_dtw.simple_distance(use_smoothed=True, window_size=11, polynomial=3)    
+    distance, target_time, _ = test_dtw.minimize_distance(start_time=100, end_time=1000, time_step_size=200, warp_path=True)
+    
