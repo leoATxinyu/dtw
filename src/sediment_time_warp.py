@@ -73,8 +73,8 @@ class SedimentTimeWarp:
             self.data.iloc[:,1] = zscore(self.data.iloc[:,1])
 
         if smooth:
-            self.target.iloc[:,1] = self.smooth_time_series(self.target.iloc[:,1], window_size=window_size, polynomial=polynomial)
-            self.data.iloc[:,1] = self.smooth_time_series(self.data.iloc[:,1])
+            # self.target.iloc[:,1] = self.smooth_time_series(self.target.iloc[:,1], window_size=window_size, polynomial=polynomial)
+            self.data.iloc[:,1] = self.smooth_time_series(self.data.iloc[:,1], window_size=window_size, polynomial=polynomial)
         
         log.info(f"Using '{self.target.columns[1]}' as target and '{self.data.columns[1]}' as data")
         log.info(f'normalization set to {normalize}; smoothing set to {smooth}')
@@ -88,13 +88,11 @@ class SedimentTimeWarp:
         """        
         return savitzky_golay(time_series, window_size, polynomial)
 
- 
     @staticmethod
     def get_warping_path(data, target, target_time: Union[int, float]):
         _target = target[target.iloc[:,0] <= target_time]
-        warping_path = dtw.warping_path(data, _target.iloc[:,1])
+        warping_path = dtw.warping_path(data.iloc[:,1], _target.iloc[:,1])
         return warping_path
-
 
     @staticmethod
     def map_warping_path(warping_path, index: int):
@@ -102,7 +100,6 @@ class SedimentTimeWarp:
         for item in warping_path:
             if item[0] == index:
                 return item[1]
-            
 
     @staticmethod
     def monte_carlo(self):
@@ -121,9 +118,8 @@ class SedimentTimeWarp:
         return distance
 
 
-    def minimize_distance(self, start_time: Union[int, float], 
-                          end_time: Union[int, float], time_step_size: Union[int, float],
-                          warp_path: bool = False):
+    def find_min_distance(self, start_time: Union[int, float], end_time: Union[int, float], time_step_size: Union[int, float],   
+                            warp_path: bool = False):
         """Find the minimum Euclidian distance(s) for a given target/data pair by stepping
         through the range of the target series given by [start_time: <time_step_size> :end_time].
 
@@ -160,14 +156,12 @@ class SedimentTimeWarp:
         -------------
         
         """
-        data = zscore(self.data.iloc[:,1])
-        target = self.target        
-        target.iloc[:,1] = zscore(target.iloc[:,1])
+
         min_distances: dict = {}
 
         for i in range(start_time, end_time, time_step_size):
-            _target = target[target.iloc[:,0] <= i]
-            distance = dtw.distance(data, _target.iloc[:,1])
+            _target = self.target[self.target.iloc[:,0] <= i]
+            distance = dtw.distance(self.data.iloc[:,1], _target.iloc[:,1])
             min_distances[i] = distance
 
         distance: float = min(min_distances.values())
@@ -176,7 +170,7 @@ class SedimentTimeWarp:
 
         if warp_path:
             self.warping_path = self.get_warping_path(data, target, target_time[0])
-  
+
         return distance, target_time, min_distances
 
 
@@ -184,13 +178,23 @@ if __name__ == "__main__":
 
     data = pd.read_csv('data/core_1100.csv')
     target = pd.read_csv('data/LR04stack.txt', sep='\\t', engine='python') 
-    target = target[target['Time_ka'] <= 372]
+    # target = target[target['Time_ka'] <= 372]
 
-    test_dtw = SedimentTimeWarp(target=target, data=data, normalize=True, smooth=True, window_size=11, polynomial=3)
-    simple_distance = test_dtw.simple_distance() 
+    test_dtw = SedimentTimeWarp(target=target, data=data, normalize=True, smooth=False, window_size=7, polynomial=3)
 
+    simple_distance = test_dtw.simple_distance()
+    _, _, results = test_dtw.find_min_distance(100, 1000, 5, warp_path=True)
 
-    # print(test_dtw.data)
+    x = []
+    y = []
+    for key in results.keys():
+        x.append(key)
+        y.append(results[key])
+    data_graph = pd.DataFrame({'x': x, 'y': y})
+    sns.lineplot(data=data_graph, x='x', y='y')
+    plt.savefig('figures/dist-vs-time_notsmooth.png', transparent=True)
+    plt.close()
+
 
 
 
