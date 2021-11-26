@@ -178,22 +178,22 @@ if __name__ == "__main__":
 
     data = pd.read_csv('data/core_1100.csv')
     target = pd.read_csv('data/LR04stack.txt', sep='\\t', engine='python') 
-    # target = target[target['Time_ka'] <= 372]
+    target = target[target['Time_ka'] <= 245]
 
-    test_dtw = SedimentTimeWarp(target=target, data=data, normalize=True, smooth=False, window_size=7, polynomial=3)
+    test_dtw = SedimentTimeWarp(target=target, data=data, normalize=True, smooth=True, window_size=11, polynomial=3)
 
     simple_distance = test_dtw.simple_distance()
-    _, _, results = test_dtw.find_min_distance(100, 1000, 5, warp_path=True)
+    # _, _, results = test_dtw.find_min_distance(100, 1000, 5, warp_path=True)
 
-    x = []
-    y = []
-    for key in results.keys():
-        x.append(key)
-        y.append(results[key])
-    data_graph = pd.DataFrame({'x': x, 'y': y})
-    sns.lineplot(data=data_graph, x='x', y='y')
-    plt.savefig('figures/dist-vs-time_notsmooth.png', transparent=True)
-    plt.close()
+    # x = []
+    # y = []
+    # for key in results.keys():
+    #     x.append(key)
+    #     y.append(results[key])
+    # data_graph = pd.DataFrame({'x': x, 'y': y})
+    # sns.lineplot(data=data_graph, x='x', y='y')
+    # plt.savefig('figures/dist-vs-time_smooth.png', transparent=True)
+    # plt.close()
 
 
 
@@ -223,26 +223,3 @@ if __name__ == "__main__":
     # sns.lineplot(data=target, x='Time_ka', y='Benthic_d18O_per-mil', ax=ax2, color="r", legend=True, linestyle='dashed', linewidth='0.8')
     # plt.savefig('figures/1100-vs-stack.png')
     # plt.close()
-
-
-    # results = []
-    # for i in range(100, 1000, 5):
-    #     target = stack[stack['Time_ka'] <= i]
-    #     target = target['Benthic_d18O_per-mil']
-    #     target = stats.zscore(target)
-    #     distance = dtw.distance(data, target)
-    #     results.append([i, distance])
-
-    # x = []
-    # y = []
-    # for group in results:
-    #     x.append(group[0])
-    #     y.append(group[1])
-
-    # data_graph = pd.DataFrame({'x': x, 'y': y})
-
-    # sns.lineplot(data=data_graph, x='x', y='y')
-
-    # result_metric = pd.DataFrame({'max_age': x, 'distance': y})
-    # selection = result_metric[result_metric['distance'] <= 8]
-    # sns.lineplot(data=selection, x=selection['max_age'], y=selection['distance'])
